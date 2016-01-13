@@ -3,6 +3,23 @@ import time
 from random import randint
 import json
 import pymongo
+from SPARQLWrapper import SPARQLWrapper, JSON
+
+def get_all_freebase_genres():
+
+
+    sparql = SPARQLWrapper("http://lod.openlinksw.com/sparql")
+    sparql.setQuery("""
+        PREFIX ns: <http://rdf.freebase.com/ns/>
+        select * where {
+        ?genre ns:common.topic.notable_types ns:m.0kpytn
+        } 
+    """)
+    sparql.setReturnFormat(JSON)
+    results = sparql.query().convert()
+    return results
+
+    
 
 def csv2json(data):
     output={}
@@ -43,38 +60,48 @@ def csv2json(data):
     return output
 
 if __name__ == '__main__':
-    
-    # of=open('t.json','w')
+    results=get_all_freebase_genres()
+    # print results
+    count=0
+    print len(results["results"]["bindings"])
+    for result in results["results"]["bindings"]:
+        count+=1
+        print count
+        fid=(result["genre"]["value"])[26:].replace('.','/')
+        print fid
 
-    client = pymongo.MongoClient('localhost', 27017)
-    db = client['googletrends']
-    collection=db['genre_query_history']
+        client = pymongo.MongoClient('localhost', 27017)
+        db = client['googletrends']
+        collection=db['genre_query_history']
 
-    google_username = "gaochang23@gmail.com"
-    google_password = "GcXx19840912"
-    path = ""
+        google_username = "email"
+        google_password = "password"
+        path = ""
 
-    # connect to Google
-    connector = pyGTrends(google_username, google_password)
+        # connect to Google
+        connector = pyGTrends(google_username, google_password)
 
-    # make request
-    fid = "/m/02822"
-    connector.request_report(fid,geo='US')
+        # make request
+        connector.request_report(fid,geo='US')
+        print 
+        res_json=csv2json(connector.decode_data.split('\n'))
+        res_json['freebase_id']=fid
+        if collection.find_one({'query_title': fid}) == None:
+            collection.insert_one(res_json)
+        
+        # wait a random amount of time between requests to avoid bot detection
+        time.sleep(randint(5, 10))
 
-    # print connector.decode_data.split('\n')#[:500]
-    print 
-    res_json=csv2json(connector.decode_data.split('\n'))
-    res_json['freebase_id']=fid
-    if collection.find_one({'query_title': mid}) == None:
-        collection.insert_one(res_json)
-    # json.dump(res_json,of)
-    # of.write('\n')
-    # print res_json
-    # wait a random amount of time between requests to avoid bot detection
-    time.sleep(randint(5, 10))
+
+
+
+
+
+
+
 
     # download file
-    # connector.save_csv(path, "pizza")
+    # connector.save_csv(path, "name")
 
     # get suggestions for keywords
     # keyword = "milk substitute"
