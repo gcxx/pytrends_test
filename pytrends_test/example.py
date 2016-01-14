@@ -117,8 +117,8 @@ def mongo_write():
         
 if __name__ == '__main__':
     
-    google_username = "gaochang23@gmail.com"
-    google_password = "GcXx19840912"
+    google_username = "email"
+    google_password = "XXXX"
 
     fid='/m/0bkbm'
     connector = pyGTrends(google_username, google_password)
